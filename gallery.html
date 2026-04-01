@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GALLERY</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --muted: #666;
+    --radius: 4px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,10,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 6px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .logo span {
+    color: var(--text);
+    opacity: 0.4;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    display: block;
+    margin-top: -4px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .photo-count {
+    font-size: 0.78rem;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .upload-btn {
+    background: var(--accent);
+    color: #0a0a0a;
+    border: none;
+    padding: 10px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    font-size: 0.85rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .upload-btn:hover { background: #d4eb3a; transform: translateY(-1px); }
+  .upload-btn svg { width: 16px; height: 16px; }
+
+  /* ── Upload Zone ── */
+  .upload-zone {
+    margin: 32px;
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 48px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .upload-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(232,255,71,0.04) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(232,255,71,0.03);
+  }
+  .upload-zone:hover::before, .upload-zone.drag-over::before { opacity: 1; }
+  .upload-zone.drag-over { border-style: solid; }
+
+  .upload-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    display: block;
+    opacity: 0.6;
+  }
+  .upload-zone h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 3px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .upload-zone p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+  }
+  .upload-zone p span { color: var(--accent); }
+
+  #file-input { display: none; }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .section-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 4px;
+    color: var(--muted);
+  }
+
+  .view-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    padding: 4px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .view-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+  }
+  .view-btn.active { background: var(--accent); color: #0a0a0a; }
+  .view-btn svg { width: 16px; height: 16px; }
+
+  /* ── Gallery Grid ── */
+  #gallery {
+    padding: 0 32px 32px;
+    display: grid;
+    gap: 3px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    transition: all 0.4s;
+  }
+  #gallery.view-masonry {
+    columns: 4;
+    column-gap: 3px;
+    display: block;
+  }
+  #gallery.view-masonry .photo-card {
+    break-inside: avoid;
+    margin-bottom: 3px;
+    display: block;
+  }
+  #gallery.view-list {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  #gallery.view-list .photo-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 70px;
+    padding: 8px;
+    background: var(--surface);
+    border-radius: var(--radius);
+  }
+  #gallery.view-list .photo-card img {
+    width: 54px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  #gallery.view-list .photo-overlay { display: none; }
+  #gallery.view-list .photo-meta-list { display: flex; flex-direction: column; }
+  #gallery.view-list .photo-name {
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+  #gallery.view-list .photo-size {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  #gallery.view-list .delete-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    opacity: 0.5;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+  }
+  #gallery.view-list .delete-btn:hover { opacity: 1; border-color: #ff4444; color: #ff4444; }
+
+  /* ── Photo Card ── */
+  .photo-card {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--surface);
+    border-radius: var(--radius);
+    aspect-ratio: 1;
+    animation: fadeUp 0.4s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .photo-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .photo-card:hover img { transform: scale(1.06); }
+
+  .photo-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    display: flex;
+    align-items: flex-end;
+    padding: 14px;
+    justify-content: space-between;
+  }
+  .photo-card:hover .photo-overlay { opacity: 1; }
+
+  .photo-name-overlay {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.5px;
+    max-width: 80%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .delete-overlay-btn {
+    background: rgba(255,68,68,0.85);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .delete-overlay-btn:hover { background: #ff2222; }
+  .delete-overlay-btn svg { width: 12px; height: 12px; }
+
+  /* ── Empty State ── */
+  .empty-state {
+    text-align: center;
+    padding: 80px 32px;
+    display: none;
+  }
+  .empty-state.visible { display: block; }
+  .empty-state h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 4px;
+    color: var(--border);
+    margin-bottom: 8px;
+  }
+  .empty-state p { color: var(--muted); font-size: 0.85rem; }
+
+  /* ── Lightbox ── */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.96);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .lightbox.open { display: flex; animation: lbIn 0.25s ease; }
+  @keyframes lbIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 10;
+  }
+  .lightbox-close:hover { border-color: var(--accent); color: var(--accent); }
+
+  .lightbox-img-wrap {
+    max-width: 90vw;
+    max-height: 80vh;
+    position: relative;
+  }
+  .lightbox-img-wrap img {
+    max-width: 90vw;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 0 80px rgba(0,0,0,0.8);
+    display: block;
+    animation: imgIn 0.3s ease;
+  }
+  @keyframes imgIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  .lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: white;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    backdrop-filter: blur(8px);
+  }
+  .lightbox-nav:hover { background: rgba(232,255,71,0.15); border-color: var(--accent); color: var(--accent); }
+  .lightbox-prev { left: -64px; }
+  .lightbox-next { right: -64px; }
+  .lightbox-nav svg { width: 18px; height: 18px; }
+
+  .lightbox-info {
+    margin-top: 20px;
+    text-align: center;
+  }
+  .lightbox-filename {
+    font-size: 0.82rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .lightbox-counter {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 3px;
+    color: var(--accent);
+    margin-top: 4px;
+  }
+
+  /* Thumbnails strip */
+  .lightbox-strip {
+    display: flex;
+    gap: 6px;
+    margin-top: 20px;
+    max-width: 80vw;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .lb-thumb {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    border-radius: 3px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.2s, opacity 0.2s;
+    opacity: 0.5;
+  }
+  .lb-thumb.active { border-color: var(--accent); opacity: 1; }
+  .lb-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  @media (max-width: 600px) {
+    header { padding: 16px; }
+    .upload-zone { margin: 16px; padding: 32px 16px; }
+    #gallery { padding: 0 16px 16px; grid-template-columns: repeat(2, 1fr); }
+    #gallery.view-masonry { columns: 2; }
+    .lightbox-prev { left: 8px; }
+    .lightbox-next { right: 8px; }
+    .controls { padding: 0 16px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    Gallery
+    <span>Photo Collection</span>
+  </div>
+  <div class="header-right">
+    <span class="photo-count" id="photo-count">0 photos</span>
+    <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload
+    </button>
+  </div>
+</header>
+
+<input type="file" id="file-input" accept="image/*" multiple>
+
+<div class="upload-zone" id="upload-zone">
+  <span class="upload-icon">📷</span>
+  <h2>Drop photos here</h2>
+  <p>or <span>click to browse</span> · JPG, PNG, GIF, WEBP supported</p>
+</div>
+
+<div class="controls" id="controls" style="display:none">
+  <span class="section-label">Your Photos</span>
+  <div class="view-toggle">
+    <button class="view-btn active" data-view="grid" title="Grid">
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>
+    </button>
+    <button class="view-btn" data-view="masonry" title="Masonry">
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="11" rx="1"/><rect x="13" y="3" width="8" height="7" rx="1"/><rect x="13" y="12" width="8" height="9" rx="1"/><rect x="3" y="16" width="8" height="5" rx="1"/></svg>
+    </button>
+    <button class="view-btn" data-view="list" title="List">
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="11" width="18" height="4" rx="1"/><rect x="3" y="18" width="18" height="4" rx="1"/></svg>
+    </button>
+  </div>
+</div>
+
+<div id="gallery"></div>
+
+<div class="empty-state" id="empty-state">
+  <h3>No photos yet</h3>
+  <p>Upload some images to start your gallery</p>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lb-close">✕</button>
+  <div class="lightbox-img-wrap">
+    <button class="lightbox-nav lightbox-prev" id="lb-prev">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <img id="lb-img" src="" alt="">
+    <button class="lightbox-nav lightbox-next" id="lb-next">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+  <div class="lightbox-info">
+    <div class="lightbox-filename" id="lb-name"></div>
+    <div class="lightbox-counter" id="lb-counter"></div>
+  </div>
+  <div class="lightbox-strip" id="lb-strip"></div>
+</div>
+
+<script>
+  const gallery = document.getElementById('gallery');
+  const fileInput = document.getElementById('file-input');
+  const uploadZone = document.getElementById('upload-zone');
+  const photoCount = document.getElementById('photo-count');
+  const controls = document.getElementById('controls');
+  const emptyState = document.getElementById('empty-state');
+  const lightbox = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lb-img');
+  const lbName = document.getElementById('lb-name');
+  const lbCounter = document.getElementById('lb-counter');
+  const lbStrip = document.getElementById('lb-strip');
+
+  let photos = []; // { name, src, size }
+  let currentIndex = 0;
+  let currentView = 'grid';
+
+  // Upload
+  fileInput.addEventListener('change', e => handleFiles(e.target.files));
+  uploadZone.addEventListener('click', () => fileInput.click());
+
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    handleFiles(e.dataTransfer.files);
+  });
+
+  function handleFiles(files) {
+    const imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
+    imgs.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        photos.push({ name: file.name, src: e.target.result, size: formatSize(file.size) });
+        renderGallery();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/1048576).toFixed(1) + ' MB';
+  }
+
+  function renderGallery() {
+    gallery.innerHTML = '';
+    photoCount.textContent = photos.length + (photos.length === 1 ? ' photo' : ' photos');
+
+    if (photos.length === 0) {
+      controls.style.display = 'none';
+      emptyState.classList.add('visible');
+      return;
+    }
+
+    controls.style.display = 'flex';
+    emptyState.classList.remove('visible');
+    uploadZone.style.display = 'none';
+
+    photos.forEach((photo, i) => {
+      const card = document.createElement('div');
+      card.className = 'photo-card';
+      card.style.animationDelay = (i % 20 * 0.04) + 's';
+
+      if (currentView === 'list') {
+        card.innerHTML = `
+          <img src="${photo.src}" alt="${photo.name}">
+          <div class="photo-meta-list">
+            <div class="photo-name">${photo.name}</div>
+            <div class="photo-size">${photo.size}</div>
+          </div>
+          <button class="delete-btn" data-i="${i}">Remove</button>
+        `;
+        card.querySelector('img').addEventListener('click', () => openLightbox(i));
+      } else {
+        card.innerHTML = `
+          <img src="${photo.src}" alt="${photo.name}">
+          <div class="photo-overlay">
+            <span class="photo-name-overlay">${photo.name}</span>
+            <button class="delete-overlay-btn" data-i="${i}" title="Remove">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </button>
+          </div>
+        `;
+        card.addEventListener('click', e => {
+          if (!e.target.closest('.delete-overlay-btn')) openLightbox(i);
+        });
+      }
+
+      card.querySelectorAll('[data-i]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          deletePhoto(parseInt(btn.dataset.i));
+        });
+      });
+
+      gallery.appendChild(card);
+    });
+  }
+
+  function deletePhoto(i) {
+    photos.splice(i, 1);
+    if (photos.length === 0) uploadZone.style.display = '';
+    renderGallery();
+  }
+
+  // View toggle
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentView = btn.dataset.view;
+      gallery.className = '';
+      if (currentView === 'masonry') gallery.classList.add('view-masonry');
+      if (currentView === 'list') gallery.classList.add('view-list');
+      renderGallery();
+    });
+  });
+
+  // Lightbox
+  function openLightbox(i) {
+    currentIndex = i;
+    lightbox.classList.add('open');
+    updateLightbox();
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function updateLightbox() {
+    const photo = photos[currentIndex];
+    lbImg.src = photo.src;
+    lbImg.alt = photo.name;
+    lbName.textContent = photo.name;
+    lbCounter.textContent = (currentIndex + 1) + ' / ' + photos.length;
+
+    lbStrip.innerHTML = '';
+    photos.forEach((p, i) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'lb-thumb' + (i === currentIndex ? ' active' : '');
+      thumb.innerHTML = `<img src="${p.src}" alt="">`;
+      thumb.addEventListener('click', () => { currentIndex = i; updateLightbox(); });
+      lbStrip.appendChild(thumb);
+    });
+
+    // scroll active thumb into view
+    const active = lbStrip.querySelector('.active');
+    if (active) active.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+  }
+
+  document.getElementById('lb-close').addEventListener('click', closeLightbox);
+  document.getElementById('lb-prev').addEventListener('click', () => {
+    currentIndex = (currentIndex - 1 + photos.length) % photos.length;
+    updateLightbox();
+  });
+  document.getElementById('lb-next').addEventListener('click', () => {
+    currentIndex = (currentIndex + 1) % photos.length;
+    updateLightbox();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (!lightbox.classList.contains('open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') { currentIndex = (currentIndex - 1 + photos.length) % photos.length; updateLightbox(); }
+    if (e.key === 'ArrowRight') { currentIndex = (currentIndex + 1) % photos.length; updateLightbox(); }
+  });
+
+  lightbox.addEventListener('click', e => {
+    if (e.target === lightbox) closeLightbox();
+  });
+</script>
+</body>
+</html>
